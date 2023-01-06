@@ -44,3 +44,27 @@ where author in (select author from book group by author having sum(amount) > 10
 create table ordering AS
 select author, title, (select round(avg(amount)) from book) as amount from book 
 where amount<(select ROUND(avg(amount)) from book);
+
+10. Вывести информацию о командировках во все города кроме Москвы и Санкт-Петербурга (фамилии и инициалы сотрудников, город ,  длительность командировки в днях, при этом первый и последний день относится к периоду командировки). Последний столбец назвать Длительность. Информацию вывести в упорядоченном по убыванию длительности поездки, а потом по убыванию названий городов (в обратном алфавитном порядке).
+select name, city, (datediff(date_last, date_first) +1) as Длительность
+from trip
+where (city != 'Москва') and (city != 'Санкт-Петербург')
+order by Длительность desc
+
+11. Вывести информацию о командировках сотрудника(ов), которые были самыми короткими по времени. В результат включить столбцы name, city, date_first, date_last.
+select name, city, date_first, date_last
+from trip
+where (datediff(date_last, date_first)) = (select min(datediff(date_last, date_first)) from trip);
+
+12. Вывести сумму суточных (произведение количества дней командировки и размера суточных) для командировок, первый день которых пришелся на февраль или март 2020 года. Значение суточных для каждой командировки занесено в столбец per_diem. Вывести фамилию и инициалы сотрудника, город, первый день командировки и сумму суточных. Последний столбец назвать Сумма. Информацию отсортировать сначала  в алфавитном порядке по фамилиям сотрудников, а затем по убыванию суммы суточных.
+select name , city, date_first, ((datediff(date_last, date_first)+1) * per_diem) as Сумма 
+from trip
+where month(date_first) in (2, 3)
+order by name, Сумма desc
+
+13. Вывести фамилию с инициалами и общую сумму суточных, полученных за все командировки для тех сотрудников, которые были в командировках больше чем 3 раза, в отсортированном по убыванию сумм суточных виде. Последний столбец назвать Сумма.
+select name, sum((datediff(date_last, date_first) + 1) * per_diem) AS Сумма
+from trip
+group by name
+having count(name) > 3
+order by Сумма desc
