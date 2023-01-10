@@ -68,3 +68,35 @@ from trip
 group by name
 having count(name) > 3
 order by Сумма desc
+
+14. Занести в таблицу fine суммы штрафов, которые должен оплатить водитель, в соответствии с данными из таблицы traffic_violation. При этом суммы заносить только в пустые поля столбца  sum_fine.
+update fine f, traffic_violation tv
+set f.sum_fine = tv.sum_fine 
+where (f.sum_fine is NULL) and (f.violation = tv.violation);
+
+15. Вывести фамилию, номер машины и нарушение только для тех водителей, которые на одной машине нарушили одно и то же правило   два и более раз. При этом учитывать все нарушения, независимо от того оплачены они или нет. Информацию отсортировать в алфавитном порядке, сначала по фамилии водителя, потом по номеру машины и, наконец, по нарушению.
+select name, number_plate, violation 
+from fine
+group by name, number_plate, violation
+having count(*)>=2
+order by name asc, number_plate, violation;
+
+16. В таблице fine увеличить в два раза сумму неоплаченных штрафов для отобранных на предыдущем шаге записей. 
+update fine,  
+(select name, number_plate, violation 
+from fine
+group by name, number_plate, violation
+having count(*)>=2) query_in
+set sum_fine = (sum_fine * 2)
+where (fine.date_payment is NULL and 
+      fine.name = query_in.name and
+      fine.number_plate = query_in.number_plate and
+      fine.violation = query_in.violation);
+
+17. Необходимо: в таблицу fine занести дату оплаты соответствующего штрафа из таблицы payment; уменьшить начисленный штраф в таблице fine в два раза  (только для тех штрафов, информация о которых занесена в таблицу payment) , если оплата произведена не позднее 20 дней со дня нарушения.
+update fine f, payment p
+set f.date_payment = p.date_payment,
+f.sum_fine = if (DATEDIFF(p.date_payment, p.date_violation) < 21, f.sum_fine/2, f.sum_fine)
+where
+f.date_payment is null and (f.name,f.number_plate,f.violation) = (p.name,p.number_plate,p.violation);
+select * from fine;
