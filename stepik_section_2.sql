@@ -80,3 +80,101 @@ from author inner join book using(author_id)
             inner join supply on book.title = supply.title 
                          and book.price = supply.price
 group by book.title, name_author;
+
+9. Для книг, которые уже есть на складе (в таблице book), но по другой цене, чем в поставке (supply),  необходимо в таблице book увеличить количество на значение, указанное в поставке,  и пересчитать цену. А в таблице  supply обнулить количество этих книг.
+update book b inner join author a on a.author_id = b.author_id
+              inner join supply s on b.title = s.title and s.author = a.name_author
+set b.amount = b.amount + s.amount,
+    b.price = (b.price*b.amount+s.price*s.amount)/(b.amount+s.amount),
+    s.amount = 0
+where b.price != s.price;
+
+10. Включить новых авторов в таблицу author с помощью запроса на добавление, а затем вывести все данные из таблицы author.  Новыми считаются авторы, которые есть в таблице supply, но нет в таблице author.
+insert into author (name_author)
+select supply.author
+from author right join supply on author.name_author = supply.author
+where name_author is null;
+
+11. Добавить новые книги из таблицы supply в таблицу book на основе сформированного выше запроса. Затем вывести для просмотра таблицу book.
+insert into book (title, author_id, price, amount)
+select title, author_id, price, amount
+from author inner join supply on author.name_author = supply.author
+where amount <> 0;
+
+12.  Занести для книги «Стихотворения и поэмы» Лермонтова жанр «Поэзия», а для книги «Остров сокровищ» Стивенсона - «Приключения». (Использовать два запроса).
+update book
+set genre_id = (select genre_id from genre where name_genre = 'Поэзия') where book_id = 10;
+
+update book
+set genre_id = (select genre_id from genre where name_genre = 'Приключения') where book_id = 11;
+
+13. Удалить всех авторов и все их книги, общее количество книг которых меньше 20.
+delete from author
+where author_id IN (select author_id
+                   from book 
+                   group by author_id 
+                   having sum(amount) < 20);
+
+14. Удалить все жанры, к которым относится меньше 4-х книг. В таблице book для этих жанров установить значение Null.
+delete from genre
+where genre_id IN (select genre_id
+                   from book
+                   group by genre_id
+                   having count(title) <4);
+
+15. Удалить всех авторов, которые пишут в жанре "Поэзия". Из таблицы book удалить все книги этих авторов. В запросе для отбора авторов использовать полное название жанра, а не его id.
+delete from author
+using author inner join book on author.author_id = book.author_id
+             inner join genre on book.genre_id = genre.genre_id
+where genre.name_genre = 'Поэзия';
+
+16. Вывести все заказы Баранова Павла (id заказа, какие книги, по какой цене и в каком количестве он заказал) в отсортированном по номеру заказа и названиям книг виде.
+select buy.buy_id, book.title, book.price, buy_book.amount
+from client inner join buy using(client_id)
+            inner join buy_book using(buy_id)
+            inner join book using(book_id)
+where client.name_client = "Баранов Павел"
+order by buy.buy_id, book.title;
+
+17. Посчитать, сколько раз была заказана каждая книга, для книги вывести ее автора (нужно посчитать, в каком количестве заказов фигурирует каждая книга).  Вывести фамилию и инициалы автора, название книги, последний столбец назвать Количество. Результат отсортировать сначала  по фамилиям авторов, а потом по названиям книг.
+select author.name_author, book.title, count(buy_book.amount) as Количество
+from author inner join book using (author_id)
+     left join buy_book using (book_id)
+group by author.name_author, book.title
+order by author.name_author, book.title;
+
+18. Вывести города, в которых живут клиенты, оформлявшие заказы в интернет-магазине. Указать количество заказов в каждый город, этот столбец назвать Количество. Информацию вывести по убыванию количества заказов, а затем в алфавитном порядке по названию городов.
+select city.name_city, count(buy.client_id) as Количество
+from city inner join client using (city_id)
+          inner join buy using (client_id)
+group by city.name_city
+order by Количество desc, city.name_city;
+
+19. Вывести номера всех оплаченных заказов и даты, когда они были оплачены.
+select buy.buy_id, date_step_end
+from buy inner join buy_step using (buy_id)
+         inner join step using (step_id)
+where name_step = "Оплата" and date_step_end is not null;
+
+20. Вывести информацию о каждом заказе: его номер, кто его сформировал (фамилия пользователя) и его стоимость (сумма произведений количества заказанных книг и их цены), в отсортированном по номеру заказа виде. Последний столбец назвать Стоимость.
+select buy.buy_id, name_client, sum(book.price * buy_book.amount) as Стоимость
+from client inner join buy using (client_id)
+     inner join buy_book using (buy_id)
+     inner join book using (book_id)
+group by buy.buy_id, name_client
+order by buy.buy_id;
+
+21. Вывести номера заказов (buy_id) и названия этапов, на которых они в данный момент находятся. Если заказ доставлен –  информацию о нем не выводить. Информацию отсортировать по возрастанию buy_id.
+select buy_id, name_step
+from buy_step inner join step using(step_id)
+where date_step_beg is not null and date_step_end is null and not (name_step = 'Доставка' and date_step_end is not null)
+order by buy_id;
+
+22. В таблице city для каждого города указано количество дней, за которые заказ может быть доставлен в этот город (рассматривается только этап "Транспортировка"). Для тех заказов, которые прошли этап транспортировки, вывести количество дней за которое заказ реально доставлен в город. А также, если заказ доставлен с опозданием, указать количество дней задержки, в противном случае вывести 0. В результат включить номер заказа (buy_id), а также вычисляемые столбцы Количество_дней и Опоздание. Информацию вывести в отсортированном по номеру заказа виде.
+select buy.buy_id, datediff(date_step_end, date_step_beg) as Количество_дней, if(datediff(date_step_end, date_step_beg) > days_delivery, (datediff(date_step_end, date_step_beg) - days_delivery), 0) as Опоздание
+from city inner join client using (city_id)
+          inner join buy using (client_id)
+          inner join buy_step using (buy_id)
+          inner join step using (step_id)
+where name_step = 'Транспортировка' and date_step_end is not null
+order by buy.buy_id;
