@@ -178,3 +178,44 @@ from city inner join client using (city_id)
           inner join step using (step_id)
 where name_step = 'Транспортировка' and date_step_end is not null
 order by buy.buy_id;
+
+23. Выбрать всех клиентов, которые заказывали книги Достоевского, информацию вывести в отсортированном по алфавиту виде. В решении используйте фамилию автора, а не его id.
+select distinct name_client
+from client inner join buy using(client_id)
+            inner join buy_book using(buy_id)
+            inner join book using(book_id)
+            inner join author using(author_id)
+where name_author="Достоевский Ф.М."
+order by name_client;
+
+select distinct name_client
+from client inner join buy using(client_id)
+            inner join buy_book using(buy_id)
+            inner join book using(book_id)
+            inner join author using(author_id)
+where name_author like "Достоевский%"
+order by name_client;
+
+select name_client
+from client inner join buy using(client_id)
+            inner join buy_book using(buy_id)
+            inner join book using(book_id)
+            inner join author on author.author_id=book.author_id
+and name_author='Достоевский Ф.М.'
+group by name_client
+order by name_client;
+
+24. Вывести жанр (или жанры), в котором было заказано больше всего экземпляров книг, указать это количество . Последний столбец назвать Количество.
+select name_genre, sum(buy_book.amount) as Количество
+from genre inner join book using(genre_id)
+           inner join buy_book using(book_id)
+group by name_genre
+having sum(buy_book.amount) = (select max(sum_amount) as max_sum_amount
+                               from 
+                                  (select genre_id, sum(buy_book.amount) as sum_amount
+                                   from book inner join buy_book using(book_id)
+                                   group by genre_id
+                                  )query_in
+                               );
+
+25. 
