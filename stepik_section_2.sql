@@ -218,4 +218,40 @@ having sum(buy_book.amount) = (select max(sum_amount) as max_sum_amount
                                   )query_in
                                );
 
-25. 
+25. Сравнить ежемесячную выручку от продажи книг за текущий и предыдущий годы. Для этого вывести год, месяц, сумму выручки в отсортированном сначала по возрастанию месяцев, затем по возрастанию лет виде. Название столбцов: Год, Месяц, Сумма.
+select year(date_step_end) as Год, monthname(date_step_end) as Месяц, sum(book.price * buy_book.amount) as Сумма
+from book inner join buy_book using(book_id)
+          inner join buy_step on buy_book.buy_id = buy_step.buy_id and buy_step.step_id = 1 and date_step_end is not null
+group by Год, Месяц          
+union 
+select year(date_payment) as Год, monthname(date_payment) as Месяц, sum(price * amount) as Сумма
+from buy_archive
+group by Год, Месяц
+order by Месяц, Год;
+
+26. Для каждой отдельной книги необходимо вывести информацию о количестве проданных экземпляров и их стоимости за 2020 и 2019 год . Вычисляемые столбцы назвать Количество и Сумма. Информацию отсортировать по убыванию стоимости.
+select title, sum(query_in.sum_amount) as Количество, sum(query_in.sum_price) as Сумма
+from
+(select title, sum(buy_archive.amount) as sum_amount, sum(buy_archive.amount * buy_archive.price) as sum_price
+ from buy_archive inner join book using(book_id)
+ group by title
+ union all
+ select title, sum(buy_book.amount) as sum_amount, sum(buy_book.amount * book.price) as sum_price
+ from book inner join buy_book using(book_id)
+           inner join buy_step on buy_book.buy_id = buy_step.buy_id and buy_step.step_id = 1 and date_step_end is not null
+group by title
+) as query_in
+group by title
+order by Сумма desc; 
+
+27.  Включить нового человека в таблицу с клиентами. Его имя Попов Илья, его email popov@test, проживает он в Москве.
+insert into client (name_client, city_id, email)
+select 'Попов Илья', city_id, 'popov@test'
+from city
+where name_city = "Москва";
+
+28.  Создать новый заказ для Попова Ильи. Его комментарий для заказа: «Связаться со мной по вопросу доставки». Важно! В решении нельзя использоваться VALUES и делать отбор по client_id.
+insert into buy (buy_description, client_id)
+select 'Связаться со мной по вопросу доставки', client_id
+from client
+where name_client like "%Попов%_Иль%";
