@@ -255,3 +255,68 @@ insert into buy (buy_description, client_id)
 select 'Связаться со мной по вопросу доставки', client_id
 from client
 where name_client like "%Попов%_Иль%";
+
+29. В таблицу buy_book добавить заказ с номером 5. Этот заказ должен содержать книгу Пастернака «Лирика» в количестве двух экземпляров и книгу Булгакова «Белая гвардия» в одном экземпляре.
+insert into buy_book (buy_id, book_id, amount)
+values (5, (select book_id from book inner join author on author.author_id = book.author_id and name_author like "Пастернак%" and title = "Лирика"), 2),
+       (5, (select book_id from book inner join author on author.author_id = book.author_id and name_author like "Булгаков%" and title = "Белая гвардия"), 1);
+
+30. Создать счет (таблицу buy_pay) на оплату заказа с номером 5, в который включить название книг, их автора, цену, количество заказанных книг и  стоимость. Последний столбец назвать Стоимость. Информацию в таблицу занести в отсортированном по названиям книг виде.
+create table buy_pay as
+select title, name_author, price, buy_book.amount, (price * buy_book.amount) as Стоимость
+from buy_book inner join book using (book_id)
+              inner join author using (author_id)
+where buy_id = 5
+order by title;
+
+31. Создать общий счет (таблицу buy_pay) на оплату заказа с номером 5. Куда включить номер заказа, количество книг в заказе (название столбца Количество) и его общую стоимость (название столбца Итого).  Для решения используйте ОДИН запрос.
+create table buy_pay as
+select buy_id, sum(buy_book.amount) as Количество, sum(price * buy_book.amount) as Итого 
+from buy_book inner join book on buy_book.book_id = book.book_id and buy_id = 5
+group by buy_id;
+
+32. В таблицу buy_step для заказа с номером 5 включить все этапы из таблицы step, которые должен пройти этот заказ. В столбцы date_step_beg и date_step_end всех записей занести Null.
+insert into buy_step (buy_id, step_id, date_step_beg, date_step_end)
+select buy_id, step_id, Null, Null
+from buy, step 
+where buy.buy_id = 5;
+
+33. В таблицу buy_step занести дату 12.04.2020 выставления счета на оплату заказа с номером 5.
+Правильнее было бы занести не конкретную, а текущую дату. Но при этом в разные дни будут вставляться разная дата, и задание нельзя будет проверить, поэтому  вставим дату 12.04.2020.
+update buy_step
+set date_step_beg  = (select now())
+where buy_id = 5 and step_id = (select step_id from step where name_step = "Оплата");
+
+update buy_step
+set date_step_beg  = "2020-04-12"
+where buy_id = 5 and step_id = (select step_id from step where name_step = "Оплата");
+
+34. Завершить этап «Оплата» для заказа с номером 5, вставив в столбец date_step_end дату 13.04.2020, и начать следующий этап («Упаковка»), задав в столбце date_step_beg для этого этапа ту же дату. Реализовать два запроса для завершения этапа и начале следующего. Они должны быть записаны в общем виде, чтобы его можно было применять для любых этапов, изменив только текущий этап. Для примера пусть это будет этап «Оплата».
+update buy_step
+set date_step_end  = "2020-04-13"
+where buy_id = 5 and step_id = (select step_id from step where name_step = "Оплата");
+
+update buy_step
+set date_step_beg  = "2020-04-13"
+where buy_id = 5 and step_id = (select step_id from step where name_step = "Упаковка");
+
+35.  Вывести студентов, которые сдавали дисциплину «Основы баз данных», указать дату попытки и результат. Информацию вывести по убыванию результатов тестирования.
+select name_student, date_attempt, result
+from student inner join attempt using(student_id)
+             inner join subject on attempt.subject_id = subject.subject_id and name_subject = "Основы баз данных"
+order by result desc;
+
+36. Вывести, сколько попыток сделали студенты по каждой дисциплине, а также средний результат попыток, который округлить до 2 знаков после запятой. Под результатом попытки понимается процент правильных ответов на вопросы теста, который занесен в столбец result.  В результат включить название дисциплины, а также вычисляемые столбцы Количество и Среднее. Информацию вывести по убыванию средних результатов.
+select name_subject, count(attempt_id) as Количество, round(avg(result), 2) as Среднее
+from subject left join attempt using(subject_id)
+group by name_subject 
+order by Среднее desc;
+
+37. Вывести студентов (различных студентов), имеющих максимальные результаты попыток . Информацию отсортировать в алфавитном порядке по фамилии студента.
+select name_student, result
+from student inner join attempt using(student_id)
+group by name_student, result
+having result = (select max(result) from attempt)
+order by name_student;
+
+38. 
