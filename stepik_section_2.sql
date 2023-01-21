@@ -319,4 +319,29 @@ group by name_student, result
 having result = (select max(result) from attempt)
 order by name_student;
 
-38. 
+38. Если студент совершал несколько попыток по одной и той же дисциплине, то вывести разницу в днях между первой и последней попыткой. В результат включить фамилию и имя студента, название дисциплины и вычисляемый столбец Интервал. Информацию вывести по возрастанию разницы. Студентов, сделавших одну попытку по дисциплине, не учитывать. 
+select name_student, name_subject, datediff(max(date_attempt), min(date_attempt)) as Интервал
+from student inner join attempt using (student_id)
+             inner join subject using (subject_id)
+group by name_student, name_subject
+having count(date_attempt) >1
+order by Интервал;
+
+39. Студенты могут тестироваться по одной или нескольким дисциплинам (не обязательно по всем). Вывести дисциплину и количество уникальных студентов (столбец назвать Количество), которые по ней проходили тестирование . Информацию отсортировать сначала по убыванию количества, а потом по названию дисциплины. В результат включить и дисциплины, тестирование по которым студенты не проходили, в этом случае указать количество студентов 0.
+select  name_subject, count(distinct(student_id)) as Количество
+from subject left join attempt using(subject_id)
+group by name_subject
+order by Количество desc, name_subject;
+
+40. Случайным образом отберите 3 вопроса по дисциплине «Основы баз данных». В результат включите столбцы question_id и name_question.
+select question_id, name_question
+from question inner join subject on question.subject_id = subject.subject_id and name_subject = "Основы баз данных"
+order by rand()
+limit 3;
+
+41. Вывести вопросы, которые были включены в тест для Семенова Ивана по дисциплине «Основы SQL» 2020-05-17  (значение attempt_id для этой попытки равно 7). Указать, какой ответ дал студент и правильный он или нет(вывести Верно или Неверно). В результат включить вопрос, ответ и вычисляемый столбец  Результат.
+select name_question, name_answer, if(is_correct=true, "Верно", "Неверно") as Результат
+from question inner join testing on question.question_id = testing.question_id and attempt_id = 7
+              inner join answer using (answer_id);
+
+42.
