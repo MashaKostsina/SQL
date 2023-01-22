@@ -344,4 +344,19 @@ select name_question, name_answer, if(is_correct=true, "Верно", "Невер
 from question inner join testing on question.question_id = testing.question_id and attempt_id = 7
               inner join answer using (answer_id);
 
-42.
+42. Посчитать результаты тестирования. Результат попытки вычислить как количество правильных ответов, деленное на 3 (количество вопросов в каждой попытке) и умноженное на 100. Результат округлить до двух знаков после запятой. Вывести фамилию студента, название предмета, дату и результат. Последний столбец назвать Результат. Информацию отсортировать сначала по фамилии студента, потом по убыванию даты попытки.
+select name_student, name_subject, date_attempt, round((count(is_correct)/3 * 100), 2) as Результат
+from student inner join attempt using (student_id)
+             inner join testing using (attempt_id)
+             left join answer on testing.answer_id  = answer.answer_id and is_correct = true
+             inner join subject on attempt.subject_id = subject.subject_id            
+group by name_student, name_subject, date_attempt
+order by name_student, date_attempt desc; 
+
+43. Для каждого вопроса вывести процент успешных решений, то есть отношение количества верных ответов к общему количеству ответов, значение округлить до 2-х знаков после запятой. Также вывести название предмета, к которому относится вопрос, и общее количество ответов на этот вопрос. В результат включить название дисциплины, вопросы по ней (столбец назвать Вопрос), а также два вычисляемых столбца Всего_ответов и Успешность. Информацию отсортировать сначала по названию дисциплины, потом по убыванию успешности, а потом по тексту вопроса в алфавитном порядке. Поскольку тексты вопросов могут быть длинными, обрезать их 30 символов и добавить многоточие "...".
+select name_subject, concat(left(name_question, 30),"...") as Вопрос, count(testing.answer_id) as Всего_ответов, round(((sum(is_correct) / count(testing.answer_id)) * 100), 2) as Успешность
+from subject inner join question using (subject_id)
+             inner join testing using (question_id)
+             left join answer on testing.answer_id  = answer.answer_id
+group by name_subject, name_question
+order by name_subject, Успешность desc, name_question; 
