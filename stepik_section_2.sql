@@ -360,3 +360,23 @@ from subject inner join question using (subject_id)
              left join answer on testing.answer_id  = answer.answer_id
 group by name_subject, name_question
 order by name_subject, Успешность desc, name_question; 
+
+44. В таблицу attempt включить новую попытку для студента Баранова Павла по дисциплине «Основы баз данных». Установить текущую дату в качестве даты выполнения попытки.
+insert into attempt (student_id, subject_id, date_attempt)
+select student.student_id, subject.subject_id, now() 
+from student inner join attempt on student.student_id = attempt.student_id and name_student = "Баранов Павел"
+             inner join subject on attempt.subject_id = subject.subject_id and name_subject = "Основы баз данных";
+             
+insert into attempt (student_id, subject_id, date_attempt)
+select student_id, subject_id, now()
+from  student, subject
+where name_student = 'Баранов Павел' and name_subject = 'Основы баз данных';
+
+insert into attempt (student_id, subject_id, date_attempt)
+(
+    (select student_id from student where name_student = 'Баранов Павел'),
+    (select subject_id from subject where name_subject = 'Основы баз данных'),
+    now()
+);
+
+45. 
