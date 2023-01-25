@@ -93,3 +93,21 @@ from question inner join attempt using (subject_id) order by rand() limit 1)),
 from question inner join attempt using (subject_id) order by rand() limit 1)),
 ((select max(attempt_id) from attempt), (select question_id
 from question inner join attempt using (subject_id) order by rand() limit 1));
+
+12. Студент прошел тестирование (то есть все его ответы занесены в таблицу testing), далее необходимо вычислить результат(запрос) и занести его в таблицу attempt для соответствующей попытки.  Результат попытки вычислить как количество правильных ответов, деленное на 3 (количество вопросов в каждой попытке) и умноженное на 100. Результат округлить до целого. Будем считать, что мы знаем id попытки,  для которой вычисляется результат, в нашем случае это 8.
+update attempt
+set result = (select round((sum(is_correct)/3 * 100), 0) from testing inner join answer on testing.answer_id  = answer.answer_id where attempt_id = 8)
+where attempt_id = 8;
+
+13. Вывести абитуриентов, которые хотят поступать на образовательную программу «Мехатроника и робототехника» в отсортированном по фамилиям виде.
+select name_enrollee
+from enrollee inner join program_enrollee using (enrollee_id)
+             inner join program on program_enrollee.program_id = program.program_id and name_program = "Мехатроника и робототехника"
+order by name_enrollee;
+
+14. Вывести образовательные программы, на которые для поступления необходим предмет «Информатика». Программы отсортировать в обратном алфавитном порядке.
+select name_program 
+from program inner join program_subject using (program_id)
+             inner join subject on program_subject.subject_id = subject.subject_id and name_subject = "Информатика"
+order by name_program desc;
+ 
