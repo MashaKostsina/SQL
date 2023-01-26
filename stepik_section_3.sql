@@ -110,4 +110,29 @@ select name_program
 from program inner join program_subject using (program_id)
              inner join subject on program_subject.subject_id = subject.subject_id and name_subject = "Информатика"
 order by name_program desc;
+
+15. Выведите количество абитуриентов, сдавших ЕГЭ по каждому предмету, максимальное, минимальное и среднее значение баллов по предмету ЕГЭ. Вычисляемые столбцы назвать Количество, Максимум, Минимум, Среднее. Информацию отсортировать по названию предмета в алфавитном порядке, среднее значение округлить до одного знака после запятой.
+select name_subject, count(enrollee_id) as Количество, max(result) as Максимум, min(result) as Минимум, round(avg(result), 1) as Среднее
+from enrollee_subject inner join subject using (subject_id)
+group by name_subject
+order by name_subject;
+
+16. Вывести образовательные программы, для которых минимальный балл ЕГЭ по каждому предмету больше или равен 40 баллам. Программы вывести в отсортированном по алфавиту виде.
+select name_program
+from program inner join program_subject using (program_id)
+group by name_program
+having min(min_result) >= 40
+order by name_program;
+
+17. Вывести образовательные программы, которые имеют самый большой план набора,  вместе с этой величиной.
+select name_program, plan
+from program
+where plan = (select max(plan) from program);
+
+18. Посчитать, сколько дополнительных баллов получит каждый абитуриент. Столбец с дополнительными баллами назвать Бонус. Информацию вывести в отсортированном по фамилиям виде.
+select name_enrollee, if(sum(bonus) is Null, 0, sum(bonus)) as Бонус
+from enrollee left join enrollee_achievement using (enrollee_id)
+              left join achievement using (achievement_id)
+group by name_enrollee
+order by name_enrollee;
  
