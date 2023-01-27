@@ -135,4 +135,27 @@ from enrollee left join enrollee_achievement using (enrollee_id)
               left join achievement using (achievement_id)
 group by name_enrollee
 order by name_enrollee;
- 
+
+19. Выведите сколько человек подало заявление на каждую образовательную программу и конкурс на нее (число поданных заявлений деленное на количество мест по плану), округленный до 2-х знаков после запятой. В запросе вывести название факультета, к которому относится образовательная программа, название образовательной программы, план набора абитуриентов на образовательную программу (plan), количество поданных заявлений (Количество) и Конкурс. Информацию отсортировать в порядке убывания конкурса.
+select name_department, name_program, plan, count(enrollee_id) as Количество, round((count(enrollee_id) / plan), 2) as Конкурс
+from department inner join program using (department_id)
+                inner join program_enrollee using (program_id)
+group by name_department, name_program, plan
+order by Конкурс desc;
+
+20. Вывести образовательные программы, на которые для поступления необходимы предмет «Информатика» и «Математика» в отсортированном по названию программ виде.
+select name_program
+from program inner join program_subject using (program_id)
+             inner join subject on program_subject.subject_id = subject.subject_id and name_subject in ("Информатика", "Математика")
+group by name_program
+having count(program_subject.subject_id) = 2
+order by name_program;
+
+21. Посчитать количество баллов каждого абитуриента на каждую образовательную программу, на которую он подал заявление, по результатам ЕГЭ. В результат включить название образовательной программы, фамилию и имя абитуриента, а также столбец с суммой баллов, который назвать itog. Информацию вывести в отсортированном сначала по образовательной программе, а потом по убыванию суммы баллов виде.
+select name_program, name_enrollee, sum(result) as itog
+from enrollee inner join program_enrollee using(enrollee_id)
+              inner join program using(program_id)
+              inner join program_subject using(program_id)
+              inner join enrollee_subject using(subject_id, enrollee_id)
+group by name_program, name_enrollee
+order by name_program, itog desc;
