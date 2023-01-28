@@ -159,3 +159,13 @@ from enrollee inner join program_enrollee using(enrollee_id)
               inner join enrollee_subject using(subject_id, enrollee_id)
 group by name_program, name_enrollee
 order by name_program, itog desc;
+
+22. ывести название образовательной программы и фамилию тех абитуриентов, которые подавали документы на эту образовательную программу, но не могут быть зачислены на нее. Эти абитуриенты имеют результат по одному или нескольким предметам ЕГЭ, необходимым для поступления на эту образовательную программу, меньше минимального балла. Информацию вывести в отсортированном сначала по программам, а потом по фамилиям абитуриентов виде.
+select name_program, name_enrollee
+from enrollee inner join program_enrollee using(enrollee_id)
+              inner join program using(program_id)
+              inner join program_subject using(program_id)
+              inner join enrollee_subject using(subject_id, enrollee_id)
+              where result < min_result
+group by name_program, name_enrollee
+order by name_program, name_enrollee
