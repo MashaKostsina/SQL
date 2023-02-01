@@ -160,7 +160,7 @@ from enrollee inner join program_enrollee using(enrollee_id)
 group by name_program, name_enrollee
 order by name_program, itog desc;
 
-22. ывести название образовательной программы и фамилию тех абитуриентов, которые подавали документы на эту образовательную программу, но не могут быть зачислены на нее. Эти абитуриенты имеют результат по одному или нескольким предметам ЕГЭ, необходимым для поступления на эту образовательную программу, меньше минимального балла. Информацию вывести в отсортированном сначала по программам, а потом по фамилиям абитуриентов виде.
+22. Вывести название образовательной программы и фамилию тех абитуриентов, которые подавали документы на эту образовательную программу, но не могут быть зачислены на нее. Эти абитуриенты имеют результат по одному или нескольким предметам ЕГЭ, необходимым для поступления на эту образовательную программу, меньше минимального балла. Информацию вывести в отсортированном сначала по программам, а потом по фамилиям абитуриентов виде.
 select name_program, name_enrollee
 from enrollee inner join program_enrollee using(enrollee_id)
               inner join program using(program_id)
@@ -169,3 +169,26 @@ from enrollee inner join program_enrollee using(enrollee_id)
               where result < min_result
 group by name_program, name_enrollee
 order by name_program, name_enrollee
+
+23. Создать вспомогательную таблицу applicant,  куда включить id образовательной программы,  id абитуриента, сумму баллов абитуриентов (столбец itog) в отсортированном сначала по id образовательной программы, а потом по убыванию суммы баллов виде.
+create table applicant
+select program_id, enrollee_id, sum(result) as itog
+from enrollee inner join program_enrollee using(enrollee_id)
+              inner join program using(program_id)
+              inner join program_subject using(program_id)
+              inner join enrollee_subject using(subject_id, enrollee_id)
+group by program_id, enrollee_id
+order by program_id, itog desc;
+
+24. Из таблицы applicant,  созданной на предыдущем шаге, удалить записи, если абитуриент на выбранную образовательную программу не набрал минимального балла хотя бы по одному предмету.
+delete from applicant
+where (program_id, enrollee_id) in (
+    select program_id, enrollee_id 
+    from program_enrollee inner join program_subject using (program_id)
+                          inner join enrollee_subject using (subject_id, enrollee_id)
+                          where result < min_result);
+                          
+25. Повысить итоговые баллы абитуриентов в таблице applicant на значения дополнительных баллов.
+update applicant
+set itog = itog + (select if(sum(bonus) is Null, 0, sum(bonus)) as Бонус
+from enrollee_achievement left join achievement using (achievement_id) where applicant.enrollee_id = enrollee_achievement.enrollee_id);
