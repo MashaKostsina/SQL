@@ -192,3 +192,22 @@ where (program_id, enrollee_id) in (
 update applicant
 set itog = itog + (select if(sum(bonus) is Null, 0, sum(bonus)) as Бонус
 from enrollee_achievement left join achievement using (achievement_id) where applicant.enrollee_id = enrollee_achievement.enrollee_id);
+
+26. Поскольку при добавлении дополнительных баллов, абитуриенты по каждой образовательной программе могут следовать не в порядке убывания суммарных баллов, необходимо создать новую таблицу applicant_order на основе таблицы applicant. При создании таблицы данные нужно отсортировать сначала по id образовательной программы, потом по убыванию итогового балла. А таблицу applicant, которая была создана как вспомогательная, необходимо удалить.
+create table applicant_order
+select program_id, enrollee_id, itog
+from applicant
+order by program_id, itog desc;
+
+select* from applicant_order;
+
+drop table applicant;
+
+27. Включить в таблицу applicant_order новый столбец str_id целого типа , расположить его перед первым.
+alter table applicant_order add str_id INT first;
+
+28. Занести в столбец str_id таблицы applicant_order нумерацию абитуриентов, которая начинается с 1 для каждой образовательной программы.
+set @num_pr := 0;
+set @row_num := 1;
+update applicant_order
+set str_id = if(program_id = @num_pr, @row_num := @row_num + 1, @row_num := 1 AND @num_pr := @num_pr + 1);
