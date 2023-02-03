@@ -211,3 +211,24 @@ set @num_pr := 0;
 set @row_num := 1;
 update applicant_order
 set str_id = if(program_id = @num_pr, @row_num := @row_num + 1, @row_num := 1 AND @num_pr := @num_pr + 1);
+
+28. Создать таблицу student,  в которую включить абитуриентов, которые могут быть рекомендованы к зачислению  в соответствии с планом набора. Информацию отсортировать сначала в алфавитном порядке по названию программ, а потом по убыванию итогового балла.
+create table student
+select name_program, name_enrollee, itog
+from enrollee inner join applicant_order using (enrollee_id)
+              inner join program using (program_id)
+where str_id <= plan
+order by name_program, itog desc;
+
+29. Отобрать все шаги, в которых рассматриваются вложенные запросы (то есть в названии шага упоминаются вложенные запросы). Указать к какому уроку и модулю они относятся. Для этого вывести 3 поля:
+в поле Модуль указать номер модуля и его название через пробел;
+в поле Урок указать номер модуля, порядковый номер урока (lesson_position) через точку и название урока через пробел;
+в поле Шаг указать номер модуля, порядковый номер урока (lesson_position) через точку, порядковый номер шага (step_position) через точку и название шага через пробел.
+Длину полей Модуль и Урок ограничить 19 символами, при этом слишком длинные надписи обозначить многоточием в конце (16 символов - это номер модуля или урока, пробел и  название Урока или Модуля,к ним присоединить "..."). Информацию отсортировать по возрастанию номеров модулей, порядковых номеров уроков и порядковых номеров шагов.
+select concat(left(concat(module_id," ", module_name), 16), "...") as Модуль, concat(left(concat(module_id, ".", lesson_position, " ", lesson_name), 16), "...") as Урок, concat(module_id, ".", lesson_position, ".", step_position, " ", step_name) as Шаг
+from module inner join lesson using (module_id)
+            inner join step using (lesson_id)
+where step_name like "%вложен%запрос%"
+order by module_id, lesson_position, step_position;
+
+30. 
